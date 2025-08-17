@@ -3,87 +3,283 @@ import {
   PanelSection,
   PanelSectionRow,
   Navigation,
-  staticClasses
+  staticClasses,
+  SidebarNavigation,
+  Router,
+  Field,
+  ToggleField
 } from "@decky/ui";
 import {
   addEventListener,
   removeEventListener,
-  callable,
   definePlugin,
   toaster,
-  // routerHook
+  routerHook,
 } from "@decky/api"
-import { useState } from "react";
-import { FaShip } from "react-icons/fa";
-
-// import logo from "../assets/logo.png";
-
-// This function calls the python function "add", which takes in two numbers and returns their sum (as a number)
-// Note the type annotations:
-//  the first one: [first: number, second: number] is for the arguments
-//  the second one: number is for the return value
-const add = callable<[first: number, second: number], number>("add");
-
-// This function calls the python function "start_timer", which takes in no arguments and returns nothing.
-// It starts a (python) timer which eventually emits the event 'timer_event'
-const startTimer = callable<[], void>("start_timer");
+import { FC, useEffect, useLayoutEffect, useState } from "react";
+import { L, localizationManager } from "./i18n";
+import { t } from "i18next";
+import { About, Upgrade } from "./pages";
+import { DeckyNatpierceIcon } from "./global";
+import { ActionButtonItem } from "./components";
+import { backend, Config, ResourceType } from "./backend";
 
 function Content() {
-  const [result, setResult] = useState<number | undefined>();
+  const localConfig: Config = JSON.parse(window.localStorage.getItem("decky-natpierce-config") || "{}");
+  const localIP = window.localStorage.getItem("decky-natpierce-ip") || "";
 
-  const onClick = async () => {
-    const result = await add(Math.random(), Math.random());
-    setResult(result);
+  const [natpierceState, setNatpierceState] = useState(localConfig.status);
+  const [natpierceStateChanging, setNatpierceStateChanging] = useState(false);
+  const [_, setInstallGuide] = useState(false);
+  const [pluginVersion, setPluginVersion] = useState("");
+  const [coreVersion, setCoreVersion] = useState("");
+  const [natpierceStateTips, setNatpierceStateTips] = useState(
+    localConfig.status ?
+      t(L.ENABLE_NATPIERCE_IS_RUNNING) :
+      t(L.ENABLE_NATPIERCE_DESC)
+  );
+  const [initialized, setInitialized] = useState(false);
+  const [__, setCurrentIP] = useState<string>(localIP);
+  const [autostart, setAutostart] = useState(localConfig.autostart);
+  const [controllerPort, setControllerPort] = useState(localConfig.controller_port);
+
+  const restartNatPierce = async () => {
+    if (!natpierceState)
+      return;
+    setNatpierceStateChanging(true);
+    const success = await backend.restartCore();
+    setNatpierceStateChanging(false);
+    if (!success) {
+      toaster.toast({
+        title: t(L.RESTART_CORE),
+        body: t(L.ENABLE_NATPIERCE_FAILED),
+        icon: <DeckyNatpierceIcon />,
+      });
+    }
+  }
+
+  const refreshVersions = async () => {
+    const _coreVersion = await backend.getVersion(ResourceType.CORE);
+    const _pluginVersion = await backend.getVersion(ResourceType.PLUGIN);
+    setCoreVersion(_coreVersion);
+    setPluginVersion(_pluginVersion);
+    return [_coreVersion];
   };
 
+  useEffect(() => {
+    refreshVersions().then(([_coreVersion]) => {
+      if (_coreVersion === "")
+        setInstallGuide(true);
+    });
+  }, []);
+
+  const applyConfig = (config: Config, save: boolean = true) => {
+    if (save) {
+      window.localStorage.setItem("decky-natpierce-config", JSON.stringify(config));
+    }
+    setNatpierceStateTips(
+      config.status ?
+        t(L.ENABLE_NATPIERCE_IS_RUNNING) :
+        t(L.ENABLE_NATPIERCE_DESC)
+    );
+    setNatpierceState(config.status);
+    setAutostart(config.autostart);
+    setControllerPort(config.controller_port);
+  }
+
+  const fetchConfig = async () => {
+    setInitialized(false);
+    const config = await backend.getConfig();
+    console.log(config);
+    applyConfig(config);
+    setInitialized(true);
+  };
+
+  const fetchIP = async () => {
+    const ip = await backend.getIP();
+    console.log(ip);
+    setCurrentIP(ip);
+    window.localStorage.setItem("decky-natpierce-ip", ip);
+  };
+
+  const fetchAllConfig = async () => {
+    await Promise.all([
+      fetchConfig(),
+      fetchIP(),
+    ]);
+  }
+
+  const getCurrentConfig = (): Config => {
+    return {
+      status: natpierceState,
+      autostart: autostart,
+      controller_port: controllerPort,
+    };
+  }
+
+  useEffect(() => {
+    if (initialized) {
+      window.localStorage.setItem("decky-natpierce-config", JSON.stringify(getCurrentConfig()));
+    }
+  }, [initialized, natpierceState, autostart, controllerPort])
+
+  useLayoutEffect(() => { fetchAllConfig(); }, []);
+
   return (
-    <PanelSection title="Panel Section">
-      <PanelSectionRow>
-        <ButtonItem
-          layout="below"
-          onClick={onClick}
-        >
-          {result ?? "Add two numbers via Python"}
-        </ButtonItem>
-      </PanelSectionRow>
-      <PanelSectionRow>
-        <ButtonItem
-          layout="below"
-          onClick={() => startTimer()}
-        >
-          {"Start Python timer"}
-        </ButtonItem>
-      </PanelSectionRow>
+    <>
+      <PanelSection title={t(L.SERVICE)}>
+        <PanelSectionRow>
+          <ToggleField
+            label={t(L.ENABLE_NATPIERCE)}
+            description={natpierceStateTips}
+            checked={natpierceState}
+            disabled={natpierceStateChanging}
+            onChange={async (value: boolean) => {
+              setNatpierceState(value);
+              setNatpierceStateChanging(true);
+              setNatpierceStateTips(
+                value ?
+                  t(L.ENABLE_NATPIERCE_LOADING) :
+                  t(L.ENABLE_NATPIERCE_DESC)
+              );
+              const [success, error] = await backend.setCoreStatus(value);
+              setNatpierceStateChanging(false);
+              if (!success) {
+                setNatpierceState(false);
+                toaster.toast({
+                  title: t(L.ENABLE_NATPIERCE_FAILED),
+                  body: error,
+                  icon: <DeckyNatpierceIcon />,
+                });
+                setNatpierceStateTips(
+                  t(L.ENABLE_NATPIERCE_FAILED) + " Err: " + error
+                );
+              } else {
+                setNatpierceStateTips(
+                  value ?
+                    t(L.ENABLE_NATPIERCE_IS_RUNNING) :
+                    t(L.ENABLE_NATPIERCE_DESC)
+                );
+              }
+              backend.getCoreStatus().then(setNatpierceState);
+            }}
+          />
+        </PanelSectionRow>
+        <PanelSectionRow>
+          <ButtonItem
+            layout="below"
+            onClick={() => {
+              Router.CloseSideMenus();
+              Navigation.NavigateToExternalWeb(
+                `http://127.0.0.1:${controllerPort}`
+              );
+            }}
+            disabled={natpierceStateChanging || !natpierceState}
+          >
+            {t(L.OPEN_DASHBOARD)}
+          </ButtonItem>
+        </PanelSectionRow>
+        <PanelSectionRow>
+          <ToggleField
+            label={t(L.AUTOSTART)}
+            description={t(L.AUTOSTART_DESC)}
+            checked={autostart}
+            onChange={(value: boolean) => {
+              setAutostart(value);
+              backend.setConfigValue("autostart", value).then(() =>
+                backend.getConfigValue("autostart").then(setAutostart));
+            }}
+          ></ToggleField>
+        </PanelSectionRow>
+      </PanelSection>
+      <PanelSection title={t(L.TOOLS)}>
+        <PanelSectionRow>
+          <ActionButtonItem
+            layout="below"
+            onClick={fetchAllConfig}
+          >
+            {t(L.RELOAD_CONFIG)}
+          </ActionButtonItem>
+        </PanelSectionRow>
+        <PanelSectionRow>
+          <ActionButtonItem
+            disabled={!natpierceState || natpierceStateChanging}
+            layout="below"
+            onClick={restartNatPierce}
+          >
+            {t(L.RESTART_CORE)}
+          </ActionButtonItem>
+        </PanelSectionRow>
+      </PanelSection>
+      <PanelSection title={t(L.VERSION)}>
+        <PanelSectionRow>
+          <Field
+            focusable
+            label={t(L.PLUGIN)}
+          >
+            {pluginVersion}
+          </Field>
+        </PanelSectionRow>
+        <PanelSectionRow>
+          <Field
+            focusable
+            label="NatPierce"
+          >
+            {coreVersion}
+          </Field>
+        </PanelSectionRow>
+        <PanelSectionRow>
+          <ButtonItem
+            layout="below"
+            onClick={() => {
+              Router.CloseSideMenus();
+              Router.Navigate("/decky-natpierce/upgrade");
+            }}
+          >
+            {t(L.UPGRADE_MANAGE)}
+          </ButtonItem>
+        </PanelSectionRow>
+        <PanelSectionRow>
+          <ButtonItem
+            layout="below"
+            onClick={() => {
+              Router.CloseSideMenus();
+              Router.Navigate("/decky-natpierce/about");
+            }}
+          >
+            {t(L.ABOUT_PLUGIN)}
+          </ButtonItem>
+        </PanelSectionRow>
+      </PanelSection>
+    </>
+  );
+};
 
-      {/* <PanelSectionRow>
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <img src={logo} />
-        </div>
-      </PanelSectionRow> */}
-
-      {/*<PanelSectionRow>
-        <ButtonItem
-          layout="below"
-          onClick={() => {
-            Navigation.Navigate("/decky-plugin-test");
-            Navigation.CloseSideMenus();
-          }}
-        >
-          Router
-        </ButtonItem>
-      </PanelSectionRow>*/}
-    </PanelSection>
+const DeckyPluginRouter: FC = () => {
+  return (
+    <SidebarNavigation
+      title="DeckyNatpierce"
+      showTitle
+      pages={[
+        {
+          title: t(L.UPGRADE),
+          content: <Upgrade />,
+          route: "/decky-natpierce/upgrade",
+        },
+        {
+          title: t(L.ABOUT),
+          content: <About />,
+          route: "/decky-natpierce/about",
+        },
+      ]}
+    />
   );
 };
 
 export default definePlugin(() => {
-  console.log("Template plugin initializing, this is called once on frontend startup")
+  localizationManager.init();
+  routerHook.addRoute("/decky-natpierce", DeckyPluginRouter);
 
-  // serverApi.routerHook.addRoute("/decky-plugin-test", DeckyPluginRouterTest, {
-  //   exact: true,
-  // });
-
-  // Add an event listener to the "timer_event" event from the backend
   const listener = addEventListener<[
     test1: string,
     test2: boolean,
@@ -97,19 +293,13 @@ export default definePlugin(() => {
   });
 
   return {
-    // The name shown in various decky menus
-    name: "Test Plugin",
-    // The element displayed at the top of your plugin's menu
-    titleView: <div className={staticClasses.Title}>Decky Example Plugin</div>,
-    // The content of your plugin's menu
+    name: "DeckyNatpierce",
+    titleView: <div className={staticClasses.Title}>DeckyNatpierce</div>,
     content: <Content />,
-    // The icon displayed in the plugin list
-    icon: <FaShip />,
-    // The function triggered when your plugin unloads
+    icon: <DeckyNatpierceIcon />,
     onDismount() {
       console.log("Unloading")
       removeEventListener("timer_event", listener);
-      // serverApi.routerHook.removeRoute("/decky-plugin-test");
     },
   };
 });

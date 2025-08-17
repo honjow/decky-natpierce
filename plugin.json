@@ -1,10 +1,10 @@
 {
-  "name": "Example Plugin",
-  "author": "John Doe",
-  "flags": ["debug", "_root"],
+  "name": "DeckyNatpierce",
+  "author": "honjow",
+  "flags": ["root"],
   "api_version": 1,
   "publish": {
-    "tags": ["template", "root"],
+    "tags": ["network", "root"],
     "description": "Decky example plugin.",
     "image": "https://opengraph.githubassets.com/1/SteamDeckHomebrew/PluginLoader"
   }

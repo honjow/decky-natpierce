@@ -1,57 +1,125 @@
-import os
-
-# The decky plugin module is located at decky-loader/plugin
-# For easy intellisense checkout the decky-loader code repo
-# and add the `decky-loader/plugin/imports` path to `python.analysis.extraPaths` in `.vscode/settings.json`
+from typing import Any, Optional, Tuple
 import decky
-import asyncio
+from core import CoreController
+from setting import Settings
+from decky import logger
+from metadata import PACKAGE_NAME
+import upgrade
+
 
 class Plugin:
-    # A normal method. It can be called from the TypeScript side using @decky/api.
-    async def add(self, left: int, right: int) -> int:
-        return left + right
-
-    async def long_running(self):
-        await asyncio.sleep(15)
-        # Passing through a bunch of random data, just as an example
-        await decky.emit("timer_event", "Hello from the backend!", True, 2)
-
-    # Asyncio-compatible long-running code, executed in a task when the plugin is loaded
     async def _main(self):
-        self.loop = asyncio.get_event_loop()
-        decky.logger.info("Hello World!")
+        self.settings = Settings()
+        logger.info(f"starting {PACKAGE_NAME} ...")
 
-    # Function called first during the unload process, utilize this to handle your plugin being stopped, but not
-    # completely removed
+        self._set_default("timeout", 15.0)
+        self._set_default("debounce_time", 10.0)
+        self._set_default("autostart", False)
+        self._set_default("controller_port", 33272)
+        self._set_default("auto_check_update", True)
+
+        self.core = CoreController()
+        self.core.set_exit_callback(lambda x: decky.emit("core_exit", x))
+        if self._get("autostart"):
+            await self.core.start()
+
     async def _unload(self):
-        decky.logger.info("Goodnight World!")
-        pass
+        if self.core.is_running:
+            await self.core.stop()
 
-    # Function called after `_unload` during uninstall, utilize this to clean up processes and other remnants of your
-    # plugin that may remain on the system
     async def _uninstall(self):
-        decky.logger.info("Goodbye World!")
-        pass
+        if self.core.is_running:
+            await self.core.stop()
 
-    async def start_timer(self):
-        self.loop.create_task(self.long_running())
+    async def get_core_status(self) -> bool:
+        is_running = self.core.is_running
+        logger.debug(f"get_core_status: {is_running}")
+        return is_running
 
-    # Migrations that should be performed before entering `_main()`.
-    async def _migration(self):
-        decky.logger.info("Migrating")
-        # Here's a migration example for logs:
-        # - `~/.config/decky-template/template.log` will be migrated to `decky.decky_LOG_DIR/template.log`
-        decky.migrate_logs(os.path.join(decky.DECKY_USER_HOME,
-                                               ".config", "decky-template", "template.log"))
-        # Here's a migration example for settings:
-        # - `~/homebrew/settings/template.json` is migrated to `decky.decky_SETTINGS_DIR/template.json`
-        # - `~/.config/decky-template/` all files and directories under this root are migrated to `decky.decky_SETTINGS_DIR/`
-        decky.migrate_settings(
-            os.path.join(decky.DECKY_HOME, "settings", "template.json"),
-            os.path.join(decky.DECKY_USER_HOME, ".config", "decky-template"))
-        # Here's a migration example for runtime data:
-        # - `~/homebrew/template/` all files and directories under this root are migrated to `decky.decky_RUNTIME_DIR/`
-        # - `~/.local/share/decky-template/` all files and directories under this root are migrated to `decky.decky_RUNTIME_DIR/`
-        decky.migrate_runtime(
-            os.path.join(decky.DECKY_HOME, "template"),
-            os.path.join(decky.DECKY_USER_HOME, ".local", "share", "decky-template"))
+    async def set_core_status(self, status: bool) -> Tuple[bool, Optional[str]]:
+        try:
+            if status:
+                await self.core.start()
+            else:
+                await self.core.stop()
+        except Exception as e:
+            logger.error(f"set_core_status: failed with {e}")
+            return False, str(e)
+        return True, None
+
+    async def get_config(self) -> dict:
+        config = {
+            "status": self.core.is_running,
+            "autostart": self._get("autostart"),
+            "controller_port": self._get("controller_port"),
+        }
+        logger.info(f"get_config: {config}")
+        return config
+
+    async def get_config_value(self, key: str):
+        logger.info(f"get_config_value: {key}")
+        value = self.settings.getSetting(key)
+        logger.info(f"get_config_value: {key} => {value}")
+        return value
+
+    async def set_config_value(self, key: str, value: Any):
+        self.settings.setSetting(key, value)
+        logger.info(f"set_config_value: {key} => {value}")
+
+    async def get_version(self, res: str) -> str:
+        if res not in upgrade.RESOURCE_TYPE_VALUES:
+            logger.error(f"get_version: invalid resource {res}")
+            return ""
+        res_type = upgrade.ResourceType(res)
+        try:
+            match res_type:
+                case upgrade.ResourceType.PLUGIN:
+                    version = decky.DECKY_PLUGIN_VERSION
+                    if version[0].isdigit():
+                        version = "v" + version
+                case upgrade.ResourceType.CORE:
+                    version = CoreController.get_version()
+        except Exception as e:
+            logger.error(f"get_version: {res} failed with {type(e)} {e}")
+            return ""
+        logger.debug(f"get_version: {res} {version}")
+        return version
+
+    async def get_latest_version(self, res: str) -> str:
+        if res not in upgrade.RESOURCE_TYPE_VALUES:
+            logger.error(f"get_latest_version: invalid resource {res}")
+            return ""
+        res_type = upgrade.ResourceType(res)
+        try:
+            version = await upgrade.get_latest_version(
+                res_type, self._get("timeout"), self._get("debounce_time")
+            )
+        except Exception as e:
+            logger.error(f"get_latest_version: failed with {e}")
+            return ""
+        logger.debug(f"get_latest_version: {res} {version}")
+        return version
+
+    def _get(self, key: str, allow_none: bool = False) -> Any:
+        if allow_none:
+            return self.settings.getSetting(key)
+        else:
+            value = self.settings.getSetting(key)
+            if value is None:
+                raise ValueError(f'Value of "{key}" is None')
+            return value
+
+    def _set_default(self, key: str, value: Any) -> None:
+        if not self.settings.getSetting(key):
+            self.settings.setSetting(key, value)
+
+    # async def _migration(self):
+    #     decky.logger.info("Migrating")
+    #     decky.migrate_logs(os.path.join(decky.DECKY_USER_HOME,
+    #                                            ".config", "decky-natpierce", "natpierce.log"))
+    #     decky.migrate_settings(
+    #         os.path.join(decky.DECKY_HOME, "settings", "natpierce.json"),
+    #         os.path.join(decky.DECKY_USER_HOME, ".config", "decky-natpierce"))
+    #     decky.migrate_runtime(
+    #         os.path.join(decky.DECKY_HOME, "natpierce"),
+    #         os.path.join(decky.DECKY_USER_HOME, ".local", "share", "decky-natpierce"))
