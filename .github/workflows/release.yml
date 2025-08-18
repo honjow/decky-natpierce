@@ -19,7 +19,7 @@ jobs:
     steps:
       - name: update dependencies
         run: |
-          pacman -Syu git npm tree zip unzip upx --noconfirm
+          pacman -Syu git npm tree zip unzip upx rsync --noconfirm
           git config --global --add safe.directory $(realpath .)
 
       - uses: actions/checkout@v4
@@ -39,7 +39,7 @@ jobs:
           # tar -czvf decky-natpierce.tar.gz --transform 's,^,decky-natpierce/,' dist py_modules bin *.py *.json *.md *.js LICENSE
           # zip
           mkdir -p decky-natpierce
-          cp -r dist py_modules bin *.py *.json *.md *.js LICENSE decky-natpierce
+          rsync -av --ignore-missing-args dist py_modules bin *.py *.json *.md *.js LICENSE decky-natpierce
           zip -r decky-natpierce.zip decky-natpierce
           rm -rf decky-natpierce
 
