@@ -113,7 +113,7 @@ async def upgrade_plugin(version: str) -> None:
             )
             await asyncio.to_thread(
                 shutil.copytree,
-                os.path.join(tmp_dir, "DeckyNatpierce"),
+                os.path.join(tmp_dir, os.path.basename(decky.DECKY_PLUGIN_DIR)),
                 plugin_dir,
                 dirs_exist_ok=True,
             )
