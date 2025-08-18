@@ -1,4 +1,4 @@
-import { Field, PanelSection, PanelSectionRow, Spinner } from "@decky/ui";
+import { Field, PanelSection, PanelSectionRow, sleep, Spinner } from "@decky/ui";
 import { FC, useState } from "react";
 import { FaCheck, FaRedoAlt, FaTimes } from "react-icons/fa";
 import { ActionButtonItem, DoubleButton } from ".";
@@ -34,6 +34,9 @@ export const InstallationGuide: FC<InstallationGuideProps> = (props) => {
     let promises = [];
     if (props.coreVersion === "" && !coreInstalling)
       promises.push(installCore());
+
+    await Promise.all(promises);
+    await sleep(100);
     props.refreshCallback();
   };
 
@@ -45,7 +48,7 @@ export const InstallationGuide: FC<InstallationGuideProps> = (props) => {
       <PanelSectionRow>
         <Field
           label="Natpierce"
-          onClick={() => installCore().then(props.refreshCallback)}
+          onClick={() => installCore().then(() => sleep(100)).then(props.refreshCallback)}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             {coreInstalling ? (<Spinner style={{ width: '1.1em' }} />) : (

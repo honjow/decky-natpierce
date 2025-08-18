@@ -39,6 +39,7 @@
     "INSTALLATION_ALL": "安装全部",
     "INSTALLATION_SKIP": "跳过安装",
     "INSTALLATION_FINISH": "完成安装",
+    "SHOW_REMOTE_ACCESS_QR": "显示远程访问二维码",
     "PLUGIN": "插件本体",
     "UPGRADE_LABEL": "安装",
     "UPGRADE_PROGRESS": "已下载",

@@ -130,6 +130,9 @@ class Plugin:
             return ""
         logger.debug(f"get_latest_version: {res} {version}")
         return version
+    
+    async def get_ip(self) -> str:
+        return utils.get_ip()
 
     def _get(self, key: str, allow_none: bool = False) -> Any:
         if allow_none:

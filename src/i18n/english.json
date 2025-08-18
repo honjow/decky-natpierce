@@ -39,6 +39,7 @@
     "INSTALLATION_ALL": "Install All",
     "INSTALLATION_SKIP": "Skip Installation",
     "INSTALLATION_FINISH": "Finish Installation",
+    "SHOW_REMOTE_ACCESS_QR": "Show Remote Access QR Code",
     "PLUGIN": "Plugin",
     "UPGRADE_LABEL": "Install",
     "UPGRADE_PROGRESS": "Downloaded",

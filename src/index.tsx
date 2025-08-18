@@ -23,10 +23,12 @@ import { About, Upgrade } from "./pages";
 import { DeckyNatpierceIcon } from "./global";
 import { ActionButtonItem, InstallationGuide } from "./components";
 import { backend, Config, ResourceType } from "./backend";
+import { QRCodeCanvas } from "qrcode.react";
 
 function Content() {
   const localConfig: Config = JSON.parse(window.localStorage.getItem("decky-natpierce-config") || "{}");
   const localIP = window.localStorage.getItem("decky-natpierce-ip") || "";
+  const localShowRemoteAccessQR = window.localStorage.getItem("decky-natpierce-show-remote-access-qr") || "false";
 
   const [natpierceState, setNatpierceState] = useState(localConfig.status);
   const [natpierceStateChanging, setNatpierceStateChanging] = useState(false);
@@ -39,9 +41,11 @@ function Content() {
       t(L.ENABLE_NATPIERCE_DESC)
   );
   const [initialized, setInitialized] = useState(false);
-  const [__, setCurrentIP] = useState<string>(localIP);
+  const [currentIP, setCurrentIP] = useState<string>(localIP);
   const [autostart, setAutostart] = useState(localConfig.autostart);
   const [controllerPort, setControllerPort] = useState(localConfig.controller_port);
+  const [qrPageUrl, setQrPageUrl] = useState<string>("");
+  const [showRemoteAccessQR, setShowRemoteAccessQR] = useState(Boolean(localShowRemoteAccessQR));
 
   // const restartNatPierce = async () => {
   //   if (!natpierceState)
@@ -108,6 +112,14 @@ function Content() {
       fetchIP(),
     ]);
   }
+
+  useEffect(() => {
+    if (currentIP) {
+      setQrPageUrl(`http://${currentIP}:${controllerPort}`)
+    }
+  },
+    [currentIP, controllerPort]
+  );
 
   const getCurrentConfig = (): Config => {
     return {
@@ -184,6 +196,27 @@ function Content() {
           >
             {t(L.OPEN_DASHBOARD)}
           </ButtonItem>
+        </PanelSectionRow>
+        <PanelSectionRow>
+          <ToggleField
+            label={t(L.SHOW_REMOTE_ACCESS_QR)}
+            description=
+            {(natpierceState && !natpierceStateChanging && qrPageUrl && showRemoteAccessQR) && (
+              <div style={{ overflowWrap: "break-word" }}>
+                <QRCodeCanvas style={{
+                  display: "block",
+                  margin: "8px auto",
+                }} value={qrPageUrl} size={128} />
+                {qrPageUrl}
+              </div>
+            )}
+            checked={showRemoteAccessQR}
+            disabled={natpierceStateChanging}
+            onChange={(value: boolean) => {
+              setShowRemoteAccessQR(value);
+              window.localStorage.setItem("decky-natpierce-show-remote-access-qr", value.toString());
+            }}
+          ></ToggleField>
         </PanelSectionRow>
         <PanelSectionRow>
           <ToggleField
