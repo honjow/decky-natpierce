@@ -42,6 +42,11 @@ update-decky-ui: ## Update @decky/ui @decky/api
 	@pnpm update @decky/ui --latest
 	@pnpm update @decky/api --latest
 
+update-core: ## Update natpierce core
+	@echo "+ $@"
+	@chmod +x update_natpierce.sh
+	@./update_natpierce.sh
+
 build-front: ## Build frontend
 	@echo "+ $@"
 	@pnpm run build
