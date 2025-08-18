@@ -5,6 +5,10 @@
 
 真正的点对点直连，实现内网穿透。
 
+|                                  |
+| -------------------------------- |
+| ![](./assets/screenshots-cn.jpg) |
+
 ## 安装方法
 
 1. 从 [Releases](https://github.com/honjow/decky-natpierce/releases/latest) 下载最新版本

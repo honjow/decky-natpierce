@@ -5,6 +5,10 @@ Decky plugin for [Natpierce](https://www.natpierce.cn).
 
 True point-to-point direct connection for internal network penetration.
 
+|                               |
+| ----------------------------- |
+| ![](./assets/screenshots.png) |
+
 ## Installation
 
 1. Download the latest release from [Releases](https://github.com/honjow/decky-natpierce/releases/latest)
