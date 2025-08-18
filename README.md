@@ -1,4 +1,5 @@
 # Decky Natpierce
+EN | [中文](README_CN.md)
 
 Decky plugin for [Natpierce](https://www.natpierce.cn).
 
