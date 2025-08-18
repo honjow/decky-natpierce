@@ -1,6 +1,6 @@
 {
   "name": "decky-natpierce",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "True point-to-point direct connection for internal network penetration.",
   "type": "module",
   "scripts": {
