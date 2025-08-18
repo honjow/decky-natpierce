@@ -36,6 +36,8 @@
     "INSTALLATION_FAILED": "Installation Failed",
     "INSTALLATION_GUIDE": "Installation Guide",
     "INSTALLATION_MSG": "It seems that you are new to here. Follow the steps below to install dependencies:",
+    "INSTALLATION_SKIP": "Skip Installation",
+    "INSTALLATION_FINISH": "Finish Installation",
     "PLUGIN": "Plugin",
     "UPGRADE_LABEL": "Install",
     "UPGRADE_PROGRESS": "Downloaded",

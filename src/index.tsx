@@ -21,7 +21,7 @@ import { L, localizationManager } from "./i18n";
 import { t } from "i18next";
 import { About, Upgrade } from "./pages";
 import { DeckyNatpierceIcon } from "./global";
-import { ActionButtonItem } from "./components";
+import { ActionButtonItem, InstallationGuide } from "./components";
 import { backend, Config, ResourceType } from "./backend";
 
 function Content() {
@@ -30,7 +30,7 @@ function Content() {
 
   const [natpierceState, setNatpierceState] = useState(localConfig.status);
   const [natpierceStateChanging, setNatpierceStateChanging] = useState(false);
-  const [_, setInstallGuide] = useState(false);
+  const [installGuide, setInstallGuide] = useState(false);
   const [pluginVersion, setPluginVersion] = useState("");
   const [coreVersion, setCoreVersion] = useState("");
   const [natpierceStateTips, setNatpierceStateTips] = useState(
@@ -125,7 +125,13 @@ function Content() {
 
   useLayoutEffect(() => { fetchAllConfig(); }, []);
 
-  return (
+  return (installGuide ?
+    <InstallationGuide
+      coreVersion={coreVersion}
+      refreshCallback={refreshVersions}
+      quitCallback={() => setInstallGuide(false)}
+    />
+    :
     <>
       <PanelSection title={t(L.SERVICE)}>
         <PanelSectionRow>

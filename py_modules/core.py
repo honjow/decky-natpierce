@@ -126,11 +126,9 @@ class CoreController:
     async def get_version(self) -> str:
         """获取natpierce核心版本号"""
         if self.is_running:
-            logger.debug("核心正在运行，从日志解析版本号")
             return self._parse_version_from_log()
         else:
-            logger.debug("核心未运行，临时启动获取版本号")
-            return await self._get_version_by_temp_start()
+            return self.settings.getSetting("core_version")
 
     def _parse_version_from_log(self) -> str:
         """从日志文件解析版本号（匹配空格开头的行）"""
@@ -158,66 +156,3 @@ class CoreController:
         except Exception as e:
             logger.error(f"解析日志版本号失败: {e}")
             return ""
-
-    async def _get_version_by_temp_start(self) -> str:
-        """临时启动并实时监控，获取版本号后立即停止"""
-        try:
-            # 启动前清空日志文件，确保只读取本次启动的日志
-            if os.path.exists(self.log_path):
-                open(self.log_path, 'w').close()
-            
-            # 启动核心
-            await self.start()
-            
-            # 实时监控日志，获取到版本号后立即停止
-            version = self._monitor_log_for_version(timeout=10)
-            
-            # 立即停止
-            await self.stop()
-            
-            return version
-            
-        except Exception as e:
-            logger.error(f"临时启动获取版本号失败: {e}")
-            # 确保清理
-            if self.is_running:
-                await self.stop()
-            return ""
-
-    def _monitor_log_for_version(self, timeout: int = 10) -> str:
-        """实时监控日志文件，找到版本号后立即返回"""
-        import time
-        import re
-        
-        start_time = time.time()
-        last_position = 0
-        
-        while time.time() - start_time < timeout:
-            try:
-                if os.path.exists(self.log_path):
-                    with open(self.log_path, 'r') as f:
-                        # 从上次读取位置开始读取
-                        f.seek(last_position)
-                        new_content = f.read()
-                        last_position = f.tell()
-                        
-                        if new_content:
-                            # 按行处理新内容
-                            for line in new_content.split('\n'):
-                                # 匹配空格开头的行中的版本号
-                                if re.match(r'^\s+', line):
-                                    match = re.search(r'V\d+\.\d+', line)
-                                    if match:
-                                        version = match.group().replace("V", "v")
-                                        logger.debug(f"实时监控找到版本号: {version}")
-                                        return version
-                
-                # 短暂等待后继续监控
-                time.sleep(0.1)
-                
-            except Exception as e:
-                logger.warning(f"监控日志时出错: {e}")
-                time.sleep(0.1)
-        
-        logger.warning(f"监控日志超时 ({timeout}秒)")
-        return ""

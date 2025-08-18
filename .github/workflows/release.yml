@@ -24,12 +24,10 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      # - name: update submodules
-      #   run: git submodule update --init --recursive
-      - name: download coer
-        run: |
-          chmod +x update_natpierce.sh
-          ./update_natpierce.sh
+      # - name: download coer
+      #   run: |
+      #     chmod +x update_natpierce.sh
+      #     ./update_natpierce.sh
 
       - name: build plugin
         run: |
@@ -38,7 +36,7 @@ jobs:
           pnpm update
           pnpm run build
           rm -f dist/*.js.map
-          tar -czvf decky-natpierce.tar.gz --transform 's,^,decky-natpierce/,' dist py_modules bin *.py *.json *.md *.js LICENSE
+          # tar -czvf decky-natpierce.tar.gz --transform 's,^,decky-natpierce/,' dist py_modules bin *.py *.json *.md *.js LICENSE
           # zip
           mkdir -p decky-natpierce
           cp -r dist py_modules bin *.py *.json *.md *.js LICENSE decky-natpierce
@@ -47,14 +45,14 @@ jobs:
 
       - name: show files
         run: |
-          tar -tzvf decky-natpierce.tar.gz
+          # tar -tzvf decky-natpierce.tar.gz
           unzip -l decky-natpierce.zip
       - name: Publish Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: decky-natpierce
           path: |
-            decky-natpierce.tar.gz
+            # decky-natpierce.tar.gz
             decky-natpierce.zip
 
   publish:
@@ -75,7 +73,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            /tmp/artifacts/decky-natpierce/decky-natpierce.tar.gz
+            # /tmp/artifacts/decky-natpierce/decky-natpierce.tar.gz
             /tmp/artifacts/decky-natpierce/decky-natpierce.zip
           tag_name: ${{ github.ref_name }}
           draft: false

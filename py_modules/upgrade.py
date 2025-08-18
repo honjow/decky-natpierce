@@ -1,6 +1,5 @@
 import asyncio
 from enum import Enum
-import gzip
 import os
 import shutil
 import stat
@@ -146,6 +145,7 @@ async def upgrade_core(version: str) -> None:
     logger.info("upgrade_core: upgrading")
     downloaded_filepath = await download_resourse(ResourceType.CORE, version)
     core_path = core.CoreController.CORE_PATH
+    settings = core.Settings()
 
     if os.path.exists(downloaded_filepath):
         ensure_bin_dir()
@@ -174,6 +174,8 @@ async def upgrade_core(version: str) -> None:
         shutil.chown(core_path, decky.DECKY_USER, decky.DECKY_USER)
         # cleanup downloaded files
         remove_no_fail(downloaded_filepath)
+
+        settings.setSetting("core_version", version)
 
         logger.info("upgrade_core: complete")
 
