@@ -89,14 +89,14 @@ def get_ip() -> str:
     ip = get_ip_by_iface('eth0')
     if ip is not None:
         return ip
+    ip = get_ip_by_connect()
+    if ip is not None:
+        return ip
     ips = get_ip_by_hostname()
     if ips is not None:
         for i in ips:
             if not i.startswith('127.') and not i.startswith('172.') and not i.startswith('198.'):
                 ip = i
-    if ip is not None:
-        return ip
-    ip = get_ip_by_connect()
     if ip is not None:
         return ip
     return '127.0.0.1'

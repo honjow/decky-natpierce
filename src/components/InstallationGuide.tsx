@@ -36,7 +36,7 @@ export const InstallationGuide: FC<InstallationGuideProps> = (props) => {
       promises.push(installCore());
 
     await Promise.all(promises);
-    await sleep(100);
+    await sleep(300);
     props.refreshCallback();
   };
 
@@ -48,7 +48,7 @@ export const InstallationGuide: FC<InstallationGuideProps> = (props) => {
       <PanelSectionRow>
         <Field
           label="Natpierce"
-          onClick={() => installCore().then(() => sleep(100)).then(props.refreshCallback)}
+          onClick={() => installCore().then(() => sleep(300)).then(props.refreshCallback)}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             {coreInstalling ? (<Spinner style={{ width: '1.1em' }} />) : (
