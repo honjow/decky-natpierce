@@ -1,7 +1,7 @@
 {
   "name": "decky-natpierce",
-  "version": "0.0.1",
-  "description": "A template to quickly create decky plugins from scratch, based on TypeScript and webpack",
+  "version": "1.0.0",
+  "description": "True point-to-point direct connection for internal network penetration.",
   "type": "module",
   "scripts": {
     "build": "rollup -c",
@@ -10,21 +10,20 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SteamDeckHomebrew/decky-plugin-template.git"
+    "url": "git+https://github.com/honjow/decky-natpierce.git"
   },
   "keywords": [
     "decky",
     "plugin",
-    "plugin-template",
     "steam-deck",
     "deck"
   ],
-  "author": "You <you@you.tld>",
+  "author": "honjow <honjow311@gmail.com>",
   "license": "BSD-3-Clause",
   "bugs": {
-    "url": "https://github.com/SteamDeckHomebrew/decky-plugin-template/issues"
+    "url": "https://github.com/honjow/decky-natpierce/issues"
   },
-  "homepage": "https://github.com/SteamDeckHomebrew/decky-plugin-template#readme",
+  "homepage": "https://github.com/honjow/decky-natpierce#readme",
   "devDependencies": {
     "@decky/rollup": "^1.0.1",
     "@decky/ui": "^4.7.2",

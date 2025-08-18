@@ -5,7 +5,7 @@
   "api_version": 1,
   "publish": {
     "tags": ["network", "root"],
-    "description": "Decky example plugin.",
-    "image": "https://opengraph.githubassets.com/1/SteamDeckHomebrew/PluginLoader"
+    "description": "True point-to-point direct connection for internal network penetration.",
+    "image": "https://opengraph.githubassets.com/1/honjow/decky-natpierce"
   }
 }
