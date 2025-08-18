@@ -43,20 +43,20 @@ function Content() {
   const [autostart, setAutostart] = useState(localConfig.autostart);
   const [controllerPort, setControllerPort] = useState(localConfig.controller_port);
 
-  const restartNatPierce = async () => {
-    if (!natpierceState)
-      return;
-    setNatpierceStateChanging(true);
-    const success = await backend.restartCore();
-    setNatpierceStateChanging(false);
-    if (!success) {
-      toaster.toast({
-        title: t(L.RESTART_CORE),
-        body: t(L.ENABLE_NATPIERCE_FAILED),
-        icon: <DeckyNatpierceIcon />,
-      });
-    }
-  }
+  // const restartNatPierce = async () => {
+  //   if (!natpierceState)
+  //     return;
+  //   setNatpierceStateChanging(true);
+  //   const success = await backend.restartCore();
+  //   setNatpierceStateChanging(false);
+  //   if (!success) {
+  //     toaster.toast({
+  //       title: t(L.RESTART_CORE),
+  //       body: t(L.ENABLE_NATPIERCE_FAILED),
+  //       icon: <DeckyNatpierceIcon />,
+  //     });
+  //   }
+  // }
 
   const refreshVersions = async () => {
     const _coreVersion = await backend.getVersion(ResourceType.CORE);
@@ -207,7 +207,7 @@ function Content() {
             {t(L.RELOAD_CONFIG)}
           </ActionButtonItem>
         </PanelSectionRow>
-        <PanelSectionRow>
+        {/* <PanelSectionRow>
           <ActionButtonItem
             disabled={!natpierceState || natpierceStateChanging}
             layout="below"
@@ -215,7 +215,7 @@ function Content() {
           >
             {t(L.RESTART_CORE)}
           </ActionButtonItem>
-        </PanelSectionRow>
+        </PanelSectionRow> */}
       </PanelSection>
       <PanelSection title={t(L.VERSION)}>
         <PanelSectionRow>
