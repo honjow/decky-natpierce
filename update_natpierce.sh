@@ -16,4 +16,8 @@ tar -xzf "natpierce-amd64-v${version}.tar.gz" -C bin
 rm -f "natpierce-amd64-v${version}.tar.gz"
 chmod +x bin/natpierce
 
+if [ -x "$(command -v upx)" ]; then
+    upx -9 bin/natpierce
+fi
+
 echo "natpierce updated to version: $version"

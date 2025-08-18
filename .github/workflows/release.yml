@@ -14,13 +14,11 @@ on:
 jobs:
   build_plugin:
     runs-on: ubuntu-latest
-    # container:
-    #   image: archlinux:latest
     steps:
-      - name: set git global safe directory
+      - name: update dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y git npm tree zip unzip
+          # sudo apt-get update
+          sudo apt-get install -y git npm tree zip unzip upx
           git config --global --add safe.directory $(realpath .)
 
       - uses: actions/checkout@v4
