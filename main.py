@@ -5,6 +5,9 @@ from setting import Settings
 from decky import logger
 from metadata import PACKAGE_NAME
 import upgrade
+import utils
+
+import logging
 
 
 class Plugin:
@@ -17,6 +20,14 @@ class Plugin:
         self._set_default("autostart", False)
         self._set_default("controller_port", 33272)
         self._set_default("auto_check_update", True)
+        self._set_default("disable_verify", False)
+        self._set_default("log_level", logging.getLevelName(logging.INFO))
+
+        level = self._get("log_level")
+        logger.setLevel(logging.getLevelNamesMapping()[level])
+        logger.info(f"log level set to {level}")
+
+        utils.init_ssl_context(self._get("disable_verify"))
 
         self.core = CoreController()
         self.core.set_exit_callback(lambda x: decky.emit("core_exit", x))
@@ -78,7 +89,7 @@ class Plugin:
                     if version[0].isdigit():
                         version = "v" + version
                 case upgrade.ResourceType.CORE:
-                    version = CoreController.get_version()
+                    version = await self.core.get_version()
         except Exception as e:
             logger.error(f"get_version: {res} failed with {type(e)} {e}")
             return ""

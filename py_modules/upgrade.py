@@ -114,7 +114,7 @@ async def upgrade_plugin(version: str) -> None:
             )
             await asyncio.to_thread(
                 shutil.copytree,
-                os.path.join(tmp_dir, "DeckyClash"),
+                os.path.join(tmp_dir, "DeckyNatpierce"),
                 plugin_dir,
                 dirs_exist_ok=True,
             )
@@ -174,7 +174,7 @@ _FUNC_MAP: Dict[ResourceType, Callable[[str], Coroutine[Any, Any, None]]] = {
 }
 
 _URL_MAP: Dict[ResourceType, Callable[[str], str]] = {
-    ResourceType.PLUGIN: lambda ver: f"https://github.com/{PACKAGE_REPO}/releases/download/{ver}/DeckyClash.zip",
+    ResourceType.PLUGIN: lambda ver: f"https://github.com/{PACKAGE_REPO}/releases/download/{ver}/decky-natpierce.zip",
     ResourceType.CORE: lambda ver: f"https://natpierce.oss-cn-beijing.aliyuncs.com/linux/natpierce-amd64-v${ver}.tar.gz",
 }
 
@@ -242,6 +242,8 @@ async def get_latest_version(
     if res == ResourceType.CORE:
         url = "https://www.natpierce.cn/tempdir/info/version.html"
         tag = await utils.get_url_to_text(url, timeout=timeout)
+        if not tag.strip().startswith("v"):
+            tag = "v" + tag.strip()
     else:
         json_data = await utils.get_url_to_json(
             get_latest_release_url(_REPO_MAP[res]), timeout=timeout

@@ -111,6 +111,7 @@ restart-decky: ## Restart Decky on remote steamdeck
 
 deploy: ## Deploy code to steamdeck and restart Decky
 	@$(MAKE) deploy-steamdeck
+	@$(MAKE) set-loglevel
 	@$(MAKE) restart-decky
 
 deploy-only: ## Deploy code to steamdeck
@@ -122,15 +123,14 @@ deploy-only-debug: ## Deploy code to steamdeck
 
 deploy-release: ## Deploy release to steamdeck and restart Decky
 	@$(MAKE) deploy-steamdeck
-	# @$(MAKE) set-loglevel
 	@$(MAKE) restart-decky
 
 set-loglevel: ## Set log level to info
 	@echo "+ $@"
 	@ssh -t $(DECK_USER)@$(DECK_HOST) -p $(DECK_PORT) -i $(DECK_KEY) \
-		'sudo chmod -v 755 $(DECK_HOME)/homebrew/plugins/$(PLUGIN_FOLDER)/py_modules'
+		'sudo chmod -v 755 $(DECK_HOME)/homebrew/plugins/$(PLUGIN_FOLDER)'
 	@ssh -t $(DECK_USER)@$(DECK_HOST) -p $(DECK_PORT) -i $(DECK_KEY) \
- 		"sudo sed -i 's/logging.DEBUG/logging.INFO/' $(DECK_HOME)/homebrew/plugins/$(PLUGIN_FOLDER)/py_modules/config.py"
+ 		"sudo sed -i 's/logging.DEBUG/logging.INFO/' $(DECK_HOME)/homebrew/plugins/$(PLUGIN_FOLDER)/main.py"
 
 it: ## Build all code, deploy it to steamdeck, restart Decky
 	@$(MAKE) build deploy
