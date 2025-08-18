@@ -1,7 +1,7 @@
 import { Field, PanelSection, PanelSectionRow, Spinner } from "@decky/ui";
 import { FC, useState } from "react";
-import { FaCheck, FaTimes } from "react-icons/fa";
-import { ActionButtonItem } from "./ActionButtonItem";
+import { FaCheck, FaRedoAlt, FaTimes } from "react-icons/fa";
+import { ActionButtonItem, DoubleButton } from ".";
 import { backend, ResourceType } from "../backend";
 import { t } from 'i18next';
 import { L } from "../i18n";
@@ -30,6 +30,13 @@ export const InstallationGuide: FC<InstallationGuideProps> = (props) => {
       });
   };
 
+  const installAll = async () => {
+    let promises = [];
+    if (props.coreVersion === "" && !coreInstalling)
+      promises.push(installCore());
+    props.refreshCallback();
+  };
+
   return (
     <PanelSection title={t(L.INSTALLATION_GUIDE)}>
       <div style={{ margin: '4px 0' }}>
@@ -42,16 +49,29 @@ export const InstallationGuide: FC<InstallationGuideProps> = (props) => {
         >
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             {coreInstalling ? (<Spinner style={{ width: '1.1em' }} />) : (
-                props.coreVersion === "" ? (<FaTimes />) :
-                  (<>{props.coreVersion} <FaCheck /></>)
+              props.coreVersion === "" ? (<FaTimes />) :
+                (<>{props.coreVersion} <FaCheck /></>)
             )}
           </div>
         </Field>
       </PanelSectionRow>
       <PanelSectionRow>
+        <DoubleButton
+          largeProps={{
+            children: t(L.INSTALLATION_ALL),
+            onClick: installAll,
+          }}
+          smallProps={{
+            children: <FaRedoAlt />,
+            onClick: props.refreshCallback,
+          }}
+        />
+      </PanelSectionRow>
+      <PanelSectionRow>
         <ActionButtonItem onClick={props.quitCallback}>
-          {props.coreVersion !== "" &&
-            t(L.INSTALLATION_FINISH)
+          {props.coreVersion !== "" ?
+            t(L.INSTALLATION_FINISH) :
+            t(L.INSTALLATION_SKIP)
           }
         </ActionButtonItem>
       </PanelSectionRow>

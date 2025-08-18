@@ -21,7 +21,7 @@ class Plugin:
         self._set_default("controller_port", 33272)
         self._set_default("auto_check_update", True)
         self._set_default("disable_verify", False)
-        self._set_default("core_version", "Unknown")
+        self._set_default("core_version", "")
         self._set_default("log_level", logging.getLevelName(logging.INFO))
 
         level = self._get("log_level")
