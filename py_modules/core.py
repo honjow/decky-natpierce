@@ -127,8 +127,10 @@ class CoreController:
         """获取natpierce核心版本号"""
         if self.is_running:
             return self._parse_version_from_log()
-        else:
+        elif os.path.exists(self.CORE_PATH):
             return self.settings.getSetting("core_version")
+        else:
+            return ""
 
     def _parse_version_from_log(self) -> str:
         """从日志文件解析版本号（匹配空格开头的行）"""
