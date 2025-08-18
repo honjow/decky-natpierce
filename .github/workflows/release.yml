@@ -1,0 +1,85 @@
+name: Release
+
+permissions:
+  contents: write
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "main"
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build_plugin:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+    steps:
+      - name: set git global safe directory
+        run: |
+          pacman -Syu git npm tree zip unzip --noconfirm
+          git config --global --add safe.directory $(realpath .)
+
+      - uses: actions/checkout@v4
+
+      # - name: update submodules
+      #   run: git submodule update --init --recursive
+      - name: download coer
+        run: |
+          chmod +x update_natpierce.sh
+          ./update_natpierce.sh
+
+      - name: build plugin
+        run: |
+          npm i -g pnpm
+          pnpm install --no-frozen-lockfile
+          pnpm update
+          pnpm run build
+          rm -f dist/*.js.map
+          tar -czvf decky-natpierce.tar.gz --transform 's,^,decky-natpierce/,' dist backend py_modules bin *.py *.json *.md *.js LICENSE
+          # zip
+          mkdir -p decky-natpierce
+          cp -r dist backend py_modules bin *.py *.json *.md *.js LICENSE decky-natpierce
+          zip -r decky-natpierce.zip decky-natpierce
+          rm -rf decky-natpierce
+
+      - name: show files
+        run: |
+          tar -tzvf decky-natpierce.tar.gz
+          unzip -l decky-natpierce.zip
+      - name: Publish Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: decky-natpierce
+          path: |
+            decky-natpierce.tar.gz
+            decky-natpierce.zip
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    needs: build_plugin
+    steps:
+      - run: mkdir /tmp/artifacts
+
+      - name: download artifact
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/artifacts
+
+      - run: ls -R /tmp/artifacts
+
+      - name: publish to github release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            /tmp/artifacts/decky-natpierce/decky-natpierce.tar.gz
+            /tmp/artifacts/decky-natpierce/decky-natpierce.zip
+          tag_name: ${{ github.ref_name }}
+          draft: false
+          generate_release_notes: true
+          prerelease: contains(github.ref, 'pre')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
