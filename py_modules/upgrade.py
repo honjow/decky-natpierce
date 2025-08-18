@@ -156,8 +156,18 @@ async def upgrade_core(version: str) -> None:
         logger.debug(f"extracting core to {core_path}")
 
         def _impl():
-            with gzip.open(downloaded_filepath, "rb") as f, open(core_path, "wb") as d:
-                d.write(f.read())
+            import tempfile
+            import glob
+            
+            with tempfile.TemporaryDirectory() as temp_dir:
+                shutil.unpack_archive(downloaded_filepath, temp_dir, format="gztar")
+                
+                # Find natpierce executable
+                natpierce_files = glob.glob(os.path.join(temp_dir, "**/natpierce"), recursive=True)
+                if natpierce_files:
+                    shutil.copy2(natpierce_files[0], core_path)
+                else:
+                    raise FileNotFoundError("natpierce executable not found")
 
         await asyncio.to_thread(_impl)
         os.chmod(core_path, 0o755)
@@ -175,7 +185,7 @@ _FUNC_MAP: Dict[ResourceType, Callable[[str], Coroutine[Any, Any, None]]] = {
 
 _URL_MAP: Dict[ResourceType, Callable[[str], str]] = {
     ResourceType.PLUGIN: lambda ver: f"https://github.com/{PACKAGE_REPO}/releases/download/{ver}/decky-natpierce.zip",
-    ResourceType.CORE: lambda ver: f"https://natpierce.oss-cn-beijing.aliyuncs.com/linux/natpierce-amd64-v${ver}.tar.gz",
+    ResourceType.CORE: lambda ver: f"https://natpierce.oss-cn-beijing.aliyuncs.com/linux/natpierce-amd64-{ver}.tar.gz",
 }
 
 

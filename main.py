@@ -57,6 +57,25 @@ class Plugin:
             logger.error(f"set_core_status: failed with {e}")
             return False, str(e)
         return True, None
+    
+    async def upgrade(self, res: str, version: str) -> Tuple[bool, Optional[str]]:
+        if res not in upgrade.RESOURCE_TYPE_VALUES:
+            logger.error(f"upgrade: invalid resource {res}")
+            return False, "invalid resource"
+        res_type = upgrade.ResourceType(res)
+        try:
+            await upgrade.upgrade(res_type, version)
+        except Exception as e:
+            logger.error(f"upgrade: failed with {e}")
+            return False, str(e)
+        return True, None
+    
+    async def cancel_upgrade(self, res: str) -> None:
+        if res not in upgrade.RESOURCE_TYPE_VALUES:
+            logger.error(f"cancel_upgrade: invalid resource {res}")
+            return
+        res_type = upgrade.ResourceType(res)
+        upgrade.cancel_upgrade(res_type)
 
     async def get_config(self) -> dict:
         config = {
