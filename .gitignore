@@ -57,3 +57,5 @@ cli/*
 cli/decky
 
 bin
+
+install_natpierce.sh

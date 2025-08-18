@@ -58,7 +58,7 @@ class Plugin:
             logger.error(f"set_core_status: failed with {e}")
             return False, str(e)
         return True, None
-    
+
     async def upgrade(self, res: str, version: str) -> Tuple[bool, Optional[str]]:
         if res not in upgrade.RESOURCE_TYPE_VALUES:
             logger.error(f"upgrade: invalid resource {res}")
@@ -70,7 +70,7 @@ class Plugin:
             logger.error(f"upgrade: failed with {e}")
             return False, str(e)
         return True, None
-    
+
     async def cancel_upgrade(self, res: str) -> None:
         if res not in upgrade.RESOURCE_TYPE_VALUES:
             logger.error(f"cancel_upgrade: invalid resource {res}")
@@ -130,7 +130,7 @@ class Plugin:
             return ""
         logger.debug(f"get_latest_version: {res} {version}")
         return version
-    
+
     async def get_ip(self) -> str:
         return utils.get_ip()
 

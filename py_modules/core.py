@@ -63,6 +63,9 @@ class CoreController:
             raise
 
     async def start(self) -> None:
+        # System environment check before starting
+        await self._pre_start_check()
+        
         await self._link_config()
         if self._process and self._process.returncode is None:
             logger.warning("core is already running")
@@ -123,8 +126,109 @@ class CoreController:
     def set_exit_callback(self, callback: Optional[ExitCallback]):
         self._exit_callback = callback
 
+    async def _check_tun_module(self) -> None:
+        """Check and handle TUN module"""
+        try:
+            # Check if TUN module exists (modinfo tun)
+            proc = await asyncio.create_subprocess_exec(
+                'modinfo', 'tun',
+                stdout=asyncio.subprocess.DEVNULL,
+                stderr=asyncio.subprocess.DEVNULL,
+                env=utils.env_fix()
+            )
+            returncode = await proc.wait()
+            
+            if returncode != 0:
+                logger.error("TUN module does not exist in the system")
+                raise RuntimeError("TUN module not found, please ensure kernel supports TUN/TAP")
+            
+            logger.info("TUN module exists in the system")
+            
+            # Check if TUN module is loaded (lsmod | grep -q "^tun ")
+            proc = await asyncio.create_subprocess_shell(
+                'lsmod | grep -q "^tun "',
+                stdout=asyncio.subprocess.DEVNULL,
+                stderr=asyncio.subprocess.DEVNULL,
+                env=utils.env_fix()
+            )
+            returncode = await proc.wait()
+            
+            if returncode == 0:
+                logger.info("TUN module is already loaded")
+                return
+            
+            # TUN module not loaded, try to load it (modprobe tun)
+            logger.info("TUN module not loaded, attempting to load...")
+            proc = await asyncio.create_subprocess_exec(
+                'modprobe', 'tun',
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                env=utils.env_fix()
+            )
+            stdout, stderr = await proc.communicate()
+            
+            if proc.returncode == 0:
+                logger.info("TUN module loaded successfully")
+            else:
+                error_msg = stderr.decode().strip() if stderr else "unknown error"
+                logger.error(f"Failed to load TUN module: {error_msg}")
+                raise RuntimeError(f"Cannot load TUN module, may need root privileges: {error_msg}")
+                
+        except Exception as e:
+            logger.error(f"TUN module check failed: {e}")
+            raise
+
+    async def _check_ip_forward(self) -> None:
+        """Check and enable IP forwarding"""
+        try:
+            # Read current IP forwarding status
+            with open('/proc/sys/net/ipv4/ip_forward', 'r') as f:
+                current_value = f.read().strip()
+            
+            if current_value == '1':
+                logger.info("IP forwarding is already enabled")
+                return
+            
+            # IP forwarding not enabled, try to enable it
+            logger.info("IP forwarding not enabled, attempting to enable...")
+            with open('/proc/sys/net/ipv4/ip_forward', 'w') as f:
+                f.write('1')
+            
+            # Verify if successfully enabled
+            with open('/proc/sys/net/ipv4/ip_forward', 'r') as f:
+                new_value = f.read().strip()
+            
+            if new_value == '1':
+                logger.info("IP forwarding enabled successfully")
+            else:
+                raise RuntimeError("Failed to enable IP forwarding, status verification failed")
+                
+        except PermissionError:
+            logger.error("Root privileges required to enable IP forwarding")
+            raise RuntimeError("Root privileges required to enable IP forwarding")
+        except FileNotFoundError:
+            logger.error("IP forwarding configuration file not found")
+            raise RuntimeError("System does not support IP forwarding")
+        except Exception as e:
+            logger.error(f"IP forwarding check failed: {e}")
+            raise RuntimeError(f"Cannot enable IP forwarding: {e}")
+
+    async def _pre_start_check(self) -> None:
+        """System environment check before starting"""
+        logger.info("Starting system environment check...")
+        
+        try:
+            # Execute checks in order
+            await self._check_tun_module()
+            await self._check_ip_forward()
+            logger.info("System environment check completed, all checks passed")
+            
+        except Exception as e:
+            logger.error(f"System environment check failed: {e}")
+            raise RuntimeError(f"System environment does not meet requirements: {e}")
+
     async def get_version(self) -> str:
-        """获取natpierce核心版本号"""
+        """Get natpierce core version"""
         if self.is_running:
             return self._parse_version_from_log()
         elif os.path.exists(self.CORE_PATH):
@@ -133,7 +237,7 @@ class CoreController:
             return ""
 
     def _parse_version_from_log(self) -> str:
-        """从日志文件解析版本号（匹配空格开头的行）"""
+        """Parse version from log file (match lines starting with spaces)"""
         try:
             if not os.path.exists(self.log_path):
                 return ""
@@ -141,20 +245,20 @@ class CoreController:
             with open(self.log_path, 'r') as f:
                 lines = f.readlines()
             
-            # 从后往前搜索，找最新的版本信息
+            # Search from bottom to top for latest version info
             for line in reversed(lines):
-                # 匹配空格开头的行中的版本号模式
+                # Match version pattern in lines starting with spaces
                 import re
-                if re.match(r'^\s+', line):  # 行以空格开头
+                if re.match(r'^\s+', line):  # Line starts with spaces
                     match = re.search(r'V\d+\.\d+', line)
                     if match:
                         version = match.group().replace("V", "v")
-                        logger.debug(f"找到版本号: {version}")
+                        logger.debug(f"Found version: {version}")
                         return version
             
-            logger.warning("在日志中未找到版本号")
+            logger.warning("Version not found in log")
             return ""
             
         except Exception as e:
-            logger.error(f"解析日志版本号失败: {e}")
+            logger.error(f"Failed to parse version from log: {e}")
             return ""
