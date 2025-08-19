@@ -31,7 +31,7 @@ export const About: FC = () => {
         </Field>
         <Field
           icon={<FiGithub style={{ display: "block" }} />}
-          label="honjoy/decky-natpierce"
+          label="honjow/decky-natpierce"
           onClick={() => {
             Navigation.NavigateToExternalWeb(
               "https://github.com/honjow/decky-natpierce"

@@ -40,6 +40,8 @@
     "INSTALLATION_SKIP": "Skip Installation",
     "INSTALLATION_FINISH": "Finish Installation",
     "SHOW_REMOTE_ACCESS_QR": "Show Remote Access QR Code",
+    "COSTOM_PORT": "Custom Port",
+    "COSTOM_PORT_DESC": "Use custom port for access",
     "PLUGIN": "Plugin",
     "UPGRADE_LABEL": "Install",
     "UPGRADE_PROGRESS": "Downloaded",
@@ -58,5 +60,9 @@
     "UPGRADE_CHANNEL": "Upgrade Channel",
     "LATEST_CHANNEL": "Latest",
     "NIGHTLY_CHANNEL": "Nightly",
-    "AUTO_CHECK_UPDATE": "Check Update Automatically"
+    "AUTO_CHECK_UPDATE": "Check Update Automatically",
+    "PORT_NUMBER": "Port Number",
+    "PORT_RANGE_ERROR": "Port must be between 1-65535",
+    "PORT_RANGE_DESC": "Enter a port number between 1-65535",
+    "CONFIRM": "Confirm"
 }

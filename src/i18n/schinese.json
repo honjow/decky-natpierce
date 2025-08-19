@@ -40,6 +40,8 @@
     "INSTALLATION_SKIP": "跳过安装",
     "INSTALLATION_FINISH": "完成安装",
     "SHOW_REMOTE_ACCESS_QR": "显示远程访问二维码",
+    "COSTOM_PORT": "自定义端口",
+    "COSTOM_PORT_DESC": "使用自定义端口进行访问",
     "PLUGIN": "插件本体",
     "UPGRADE_LABEL": "安装",
     "UPGRADE_PROGRESS": "已下载",
@@ -58,5 +60,9 @@
     "UPGRADE_CHANNEL": "更新通道",
     "LATEST_CHANNEL": "最新版本",
     "NIGHTLY_CHANNEL": "每夜构建",
-    "AUTO_CHECK_UPDATE": "自动检查更新"
+    "AUTO_CHECK_UPDATE": "自动检查更新",
+    "PORT_NUMBER": "端口号",
+    "PORT_RANGE_ERROR": "端口号必须在 1-65535 之间",
+    "PORT_RANGE_DESC": "请输入 1-65535 之间的端口号",
+    "CONFIRM": "确认"
 }

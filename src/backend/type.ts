@@ -7,4 +7,5 @@ export interface Config {
   status: boolean,
   controller_port: number,
   autostart: boolean,
+  costom_port: boolean,
 }
