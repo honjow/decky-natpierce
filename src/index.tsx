@@ -7,28 +7,33 @@ import {
   SidebarNavigation,
   Router,
   Field,
-  ToggleField
+  ToggleField,
+  showModal,
+  ConfirmModal,
+  TextField,
 } from "@decky/ui";
 import {
-  addEventListener,
-  removeEventListener,
   definePlugin,
   toaster,
-  routerHook,
+  routerHook
 } from "@decky/api"
 import { FC, useEffect, useLayoutEffect, useState } from "react";
 import { L, localizationManager } from "./i18n";
 import { t } from "i18next";
 import { About, Upgrade } from "./pages";
-import { DeckyNatpierceIcon } from "./global";
+import { DeckyNatpierceIcon, DefautlPort } from "./global";
 import { ActionButtonItem, InstallationGuide } from "./components";
 import { backend, Config, ResourceType } from "./backend";
 import { QRCodeCanvas } from "qrcode.react";
 
 function Content() {
-  const localConfig: Config = JSON.parse(window.localStorage.getItem("decky-natpierce-config") || "{}");
-  const localIP = window.localStorage.getItem("decky-natpierce-ip") || "";
-  const localShowRemoteAccessQR = window.localStorage.getItem("decky-natpierce-show-remote-access-qr") || "false";
+  const keyConfig = "decky-natpierce-config";
+  const keyIP = "decky-natpierce-ip";
+  const keyShowRemoteAccessQR = "decky-natpierce-show-remote-access-qr";
+
+  const localConfig: Config = JSON.parse(window.localStorage.getItem(keyConfig) || "{}");
+  const localIP = window.localStorage.getItem(keyIP) || "";
+  const localShowRemoteAccessQR = window.localStorage.getItem(keyShowRemoteAccessQR) || "false";
 
   const [natpierceState, setNatpierceState] = useState(localConfig.status);
   const [natpierceStateChanging, setNatpierceStateChanging] = useState(false);
@@ -44,6 +49,7 @@ function Content() {
   const [currentIP, setCurrentIP] = useState<string>(localIP);
   const [autostart, setAutostart] = useState(localConfig.autostart);
   const [controllerPort, setControllerPort] = useState(localConfig.controller_port);
+  const [costomPort, setCostomPort] = useState(localConfig.costom_port);
   const [qrPageUrl, setQrPageUrl] = useState<string>("");
   const [showRemoteAccessQR, setShowRemoteAccessQR] = useState(Boolean(localShowRemoteAccessQR));
 
@@ -79,7 +85,7 @@ function Content() {
 
   const applyConfig = (config: Config, save: boolean = true) => {
     if (save) {
-      window.localStorage.setItem("decky-natpierce-config", JSON.stringify(config));
+      window.localStorage.setItem(keyConfig, JSON.stringify(config));
     }
     setNatpierceStateTips(
       config.status ?
@@ -89,6 +95,7 @@ function Content() {
     setNatpierceState(config.status);
     setAutostart(config.autostart);
     setControllerPort(config.controller_port);
+    setCostomPort(config.costom_port);
   }
 
   const fetchConfig = async () => {
@@ -103,7 +110,7 @@ function Content() {
     const ip = await backend.getIP();
     console.log(ip);
     setCurrentIP(ip);
-    window.localStorage.setItem("decky-natpierce-ip", ip);
+    window.localStorage.setItem(keyIP, ip);
   };
 
   const fetchAllConfig = async () => {
@@ -115,10 +122,10 @@ function Content() {
 
   useEffect(() => {
     if (currentIP) {
-      setQrPageUrl(`http://${currentIP}:${controllerPort}`)
+      setQrPageUrl(`http://${currentIP}:${costomPort ? controllerPort : DefautlPort}`)
     }
   },
-    [currentIP, controllerPort]
+    [currentIP, controllerPort, costomPort]
   );
 
   const getCurrentConfig = (): Config => {
@@ -126,14 +133,15 @@ function Content() {
       status: natpierceState,
       autostart: autostart,
       controller_port: controllerPort,
+      costom_port: costomPort,
     };
   }
 
   useEffect(() => {
     if (initialized) {
-      window.localStorage.setItem("decky-natpierce-config", JSON.stringify(getCurrentConfig()));
+      window.localStorage.setItem(keyConfig, JSON.stringify(getCurrentConfig()));
     }
-  }, [initialized, natpierceState, autostart, controllerPort])
+  }, [initialized, natpierceState, autostart, controllerPort, costomPort])
 
   useLayoutEffect(() => { fetchAllConfig(); }, []);
 
@@ -214,7 +222,7 @@ function Content() {
             disabled={natpierceStateChanging}
             onChange={(value: boolean) => {
               setShowRemoteAccessQR(value);
-              window.localStorage.setItem("decky-natpierce-show-remote-access-qr", value.toString());
+              window.localStorage.setItem(keyShowRemoteAccessQR, value.toString());
             }}
           ></ToggleField>
         </PanelSectionRow>
@@ -230,6 +238,66 @@ function Content() {
             }}
           ></ToggleField>
         </PanelSectionRow>
+        <PanelSectionRow>
+          <ToggleField
+            label={t(L.COSTOM_PORT)}
+            checked={costomPort}
+            disabled={natpierceStateChanging || natpierceState}
+            onChange={(value: boolean) => {
+              setCostomPort(value);
+              backend.setConfigValue("costom_port", value).then(() =>
+                backend.getConfigValue("costom_port").then(setCostomPort));
+            }}
+          ></ToggleField>
+        </PanelSectionRow>
+        {costomPort && <PanelSectionRow>
+          <ButtonItem
+            layout="below"
+            label={t(L.PORT_NUMBER)}
+            disabled={!costomPort || natpierceStateChanging || natpierceState}
+            description={t(L.PORT_RANGE_DESC)}
+            onClick={() => {
+              const PortInputModal = ({ closeModal }: { closeModal: () => void }) => {
+                const [tempPort, setTempPort] = useState(controllerPort.toString());
+
+                return (
+                  <ConfirmModal
+                    strTitle={t(L.PORT_NUMBER)}
+                    strDescription={
+                      <TextField
+                        value={tempPort}
+                        onChange={(e) => setTempPort(e.target.value)}
+                        mustBeNumeric={true}
+                        rangeMin={1}
+                        rangeMax={65535}
+                        description={t(L.PORT_RANGE_DESC)}
+                        focusOnMount={true}
+                      />
+                    }
+                    strOKButtonText={t(L.CONFIRM)}
+                    strCancelButtonText={t(L.CANCEL)}
+                    onOK={async () => {
+                      const port = parseInt(tempPort);
+                      if (!isNaN(port) && port >= 1 && port <= 65535) {
+                        setControllerPort(port);
+                        await backend.setConfigValue("controller_port", port);
+                      }
+                      closeModal();
+                    }}
+                    onCancel={() => {
+                      closeModal();
+                    }}
+                    closeModal={closeModal}
+                  />
+                );
+              };
+
+              const modalResult = showModal(<PortInputModal closeModal={() => modalResult.Close()} />);
+            }}
+          >
+            {controllerPort}
+          </ButtonItem>
+        </PanelSectionRow>}
       </PanelSection>
       <PanelSection title={t(L.TOOLS)}>
         <PanelSectionRow>
@@ -319,18 +387,6 @@ export default definePlugin(() => {
   localizationManager.init();
   routerHook.addRoute("/decky-natpierce", DeckyPluginRouter);
 
-  const listener = addEventListener<[
-    test1: string,
-    test2: boolean,
-    test3: number
-  ]>("timer_event", (test1, test2, test3) => {
-    console.log("Template got timer_event with:", test1, test2, test3)
-    toaster.toast({
-      title: "template got timer_event",
-      body: `${test1}, ${test2}, ${test3}`
-    });
-  });
-
   return {
     name: "DeckyNatpierce",
     titleView: <div className={staticClasses.Title}>DeckyNatpierce</div>,
@@ -338,7 +394,6 @@ export default definePlugin(() => {
     icon: <DeckyNatpierceIcon />,
     onDismount() {
       console.log("Unloading")
-      removeEventListener("timer_event", listener);
     },
   };
 });

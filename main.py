@@ -3,7 +3,7 @@ import decky
 from core import CoreController
 from setting import Settings
 from decky import logger
-from metadata import PACKAGE_NAME
+from metadata import DEFAILT_PORT, PACKAGE_NAME
 import upgrade
 import utils
 
@@ -18,7 +18,8 @@ class Plugin:
         self._set_default("timeout", 15.0)
         self._set_default("debounce_time", 10.0)
         self._set_default("autostart", False)
-        self._set_default("controller_port", 33272)
+        self._set_default("controller_port", DEFAILT_PORT)
+        self._set_default("costom_port", False)
         self._set_default("auto_check_update", True)
         self._set_default("disable_verify", False)
         self._set_default("core_version", "")
@@ -83,6 +84,7 @@ class Plugin:
             "status": self.core.is_running,
             "autostart": self._get("autostart"),
             "controller_port": self._get("controller_port"),
+            "costom_port": self._get("costom_port"),
         }
         logger.info(f"get_config: {config}")
         return config
