@@ -211,10 +211,16 @@ const Content: FC = () => {
             description=
             {(natpierceState && !natpierceStateChanging && qrPageUrl && showRemoteAccessQR) && (
               <div style={{ overflowWrap: "break-word" }}>
-                <QRCodeCanvas style={{
-                  display: "block",
-                  margin: "8px auto",
-                }} value={qrPageUrl} size={128} />
+                <QRCodeCanvas
+                  style={{
+                    display: "block",
+                    margin: "8px auto",
+                  }}
+                  value={qrPageUrl}
+                  size={128}
+                  bgColor="transparent"
+                  fgColor="#ffffff"
+                />
                 {qrPageUrl}
               </div>
             )}
