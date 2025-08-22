@@ -26,7 +26,7 @@ import { ActionButtonItem, InstallationGuide } from "./components";
 import { backend, Config, ResourceType } from "./backend";
 import { QRCodeCanvas } from "qrcode.react";
 
-function Content() {
+const Content: FC = () => {
   const keyConfig = "decky-natpierce-config";
   const keyIP = "decky-natpierce-ip";
   const keyShowRemoteAccessQR = "decky-natpierce-show-remote-access-qr";
