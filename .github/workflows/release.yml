@@ -31,9 +31,8 @@ jobs:
 
       - name: build plugin
         run: |
-          npm i -g pnpm
-          pnpm install --no-frozen-lockfile
-          pnpm update
+          npm i -g pnpm@10.17.1
+          pnpm install --frozen-lockfile
           pnpm run build
           rm -f dist/*.js.map
           # tar -czvf decky-natpierce.tar.gz --transform 's,^,decky-natpierce/,' dist py_modules bin *.py *.json *.md *.js LICENSE
