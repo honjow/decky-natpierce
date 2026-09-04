@@ -1,7 +1,8 @@
 import { Field, PanelSection, PanelSectionRow, sleep, Spinner } from "@decky/ui";
 import { FC, useState } from "react";
 import { FaCheck, FaRedoAlt, FaTimes } from "react-icons/fa";
-import { ActionButtonItem, DoubleButton } from ".";
+import { ActionButtonItem } from "./ActionButtonItem";
+import { DoubleButton } from "./DoubleButton";
 import { backend, ResourceType } from "../backend";
 import { t } from 'i18next';
 import { L } from "../i18n";
