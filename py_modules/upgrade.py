@@ -187,7 +187,7 @@ _FUNC_MAP: Dict[ResourceType, Callable[[str], Coroutine[Any, Any, None]]] = {
 
 _URL_MAP: Dict[ResourceType, Callable[[str], str]] = {
     ResourceType.PLUGIN: lambda ver: f"https://github.com/{PACKAGE_REPO}/releases/download/{ver}/decky-natpierce.zip",
-    ResourceType.CORE: lambda ver: f"https://natpierce.oss-cn-beijing.aliyuncs.com/linux/natpierce-amd64-{ver}.tar.gz",
+    ResourceType.CORE: lambda ver: f"https://download.natpierce.cn/linux/natpierce-amd64-{ver}.tar.gz",
 }
 
 
